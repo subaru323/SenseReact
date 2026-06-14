@@ -1,0 +1,25 @@
+# Arduino ビルド出力
+build/
+*.elf
+*.hex
+*.bin
+*.map
+
+# Arduino IDE キャッシュ
+.arduino15/
+libraries/
+
+# VS Code設定（個人設定は共有しない）
+.vscode/
+!.vscode/extensions.json
+
+# Claude Code内部ファイル（チームには不要）
+.claude/
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS（チームにMacユーザーがいる場合の対策）
+.DS_Store
