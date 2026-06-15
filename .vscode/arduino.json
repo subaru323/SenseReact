@@ -1,0 +1,6 @@
+{
+    "board": "SPRESENSE:spresense:spresense",
+    "sketch": "HDR_Camera_Capture/HDR_Camera_Capture.ino",
+    "port": "COM4",
+    "output": "build"
+}

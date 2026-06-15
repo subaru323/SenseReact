@@ -37,15 +37,16 @@
 // 設定値（変更が必要な場合はここを編集する）
 // ========================================================
 
-// 撮影解像度（まず確実に動くVGAで設定）
-// 変更候補: CAM_IMGSIZE_QVGA_H/V（320x240）、CAM_IMGSIZE_HD_H/V（1280x720）
-const int IMG_WIDTH  = CAM_IMGSIZE_VGA_H;   // 640ピクセル
-const int IMG_HEIGHT = CAM_IMGSIZE_VGA_V;   // 480ピクセル
+// 撮影解像度（まず確実に動くQVGAで設定）
+// 動作確認後に変更: CAM_IMGSIZE_VGA_H/V（640x480）、CAM_IMGSIZE_HD_H/V（1280x720）
+const int IMG_WIDTH  = CAM_IMGSIZE_QVGA_H;  // 320ピクセル
+const int IMG_HEIGHT = CAM_IMGSIZE_QVGA_V;  // 240ピクセル
 
 // 画像フォーマット（JPEGが最も標準的で確認しやすい）
 const CAM_IMAGE_PIX_FMT IMG_FORMAT = CAM_IMAGE_PIX_FMT_JPG;
 
-// JPEG圧縮品質（75が標準。数値が大きいほど高画質・サイズ大）
+// JPEG圧縮品質（0〜100。75が標準。数値が大きいほど高画質・サイズ大）
+// ※ begin()の引数ではなく、専用メソッド setJPEGQuality() で設定する（ライブラリ仕様）
 const int JPEG_QUALITY = 75;
 
 // SDカードへの保存ファイル名
@@ -61,13 +62,11 @@ bool cameraReady = false;  // カメラ初期化成功フラグ
 bool sdReady     = false;  // SD初期化成功フラグ（USE_SD時のみ使用）
 
 // ========================================================
-// コールバック関数（Camera.h が要求するエラーハンドラ）
-// ※ 撮影中にエラーが起きたときに自動で呼ばれる
+// エラー内容を日本語で表示するヘルパー関数
+// ※ このライブラリは onError コールバックを持たないため、
+//    各処理が返す CamErr を見て、この関数で意味を表示する。
 // ========================================================
-void cameraErrorCallback(CamErr err) {
-  Serial.print("[カメラ ERROR] コード: ");
-  Serial.println((int)err);
-
+void printCamErr(CamErr err) {
   // エラーコードの意味を日本語で補足
   switch (err) {
     case CAM_ERR_NO_DEVICE:       Serial.println("  -> カメラが見つかりません。接続を確認してください。"); break;
@@ -122,18 +121,18 @@ void setup() {
   Serial.print("[カメラ] 初期化中... ");
 
   CamErr err = theCamera.begin(
-    1,                    // バッファ枚数（静止画1枚なので1で十分）
-    CAM_VIDEO_FPS_NONE,   // ビデオストリームは使わない（静止画専用）
-    IMG_WIDTH,            // 解像度 幅
-    IMG_HEIGHT,           // 解像度 高さ
-    CAM_IMAGE_PIX_FMT_YUV422,  // プレビュー用フォーマット（内部用、変更不要）
-    JPEG_QUALITY          // JPEG品質
+    1,                         // バッファ枚数（静止画1枚なので1で十分）
+    CAM_VIDEO_FPS_30,          // 30fps（CAM_VIDEO_FPS_NONEはHDRカメラで非対応）
+    CAM_IMGSIZE_QVGA_H,        // 320px（QVGA。VGAより確実に動く小さい解像度）
+    CAM_IMGSIZE_QVGA_V,        // 240px
+    CAM_IMAGE_PIX_FMT_YUV422   // プレビュー用フォーマット（内部用、変更不要）
   );
 
   if (err != CAM_ERR_SUCCESS) {
     Serial.println("失敗！");
     Serial.print("  エラーコード: ");
     Serial.println((int)err);
+    printCamErr(err);  // 原因を日本語で表示
     Serial.println("  -> カメラの接続・向き・コネクタを確認してください。");
     cameraReady = false;
     return;  // カメラが使えないので setup() を終了
@@ -142,7 +141,19 @@ void setup() {
   Serial.println("OK");
   cameraReady = true;
 
-  // ---- [4] 静止画フォーマットの設定 ----
+  // ---- [4] JPEG画質の設定 ----
+  // ※ begin()の引数ではなく、専用メソッドで設定するのが正しい仕様
+  Serial.print("[カメラ] JPEG画質設定中... ");
+  err = theCamera.setJPEGQuality(JPEG_QUALITY);
+  if (err != CAM_ERR_SUCCESS) {
+    // 画質設定は失敗しても撮影自体は可能なので、警告のみ出して続行
+    Serial.println("警告: 画質設定に失敗（既定値で続行します）");
+    printCamErr(err);
+  } else {
+    Serial.println("OK");
+  }
+
+  // ---- [5] 静止画フォーマットの設定 ----
   Serial.print("[カメラ] 静止画フォーマット設定中... ");
 
   err = theCamera.setStillPictureImageFormat(
@@ -155,15 +166,12 @@ void setup() {
     Serial.println("失敗！");
     Serial.print("  エラーコード: ");
     Serial.println((int)err);
+    printCamErr(err);  // 原因を日本語で表示
     cameraReady = false;
     return;
   }
 
   Serial.println("OK");
-
-  // ---- [5] エラーコールバックの登録 ----
-  // 撮影中にエラーが起きた場合、cameraErrorCallback() が自動で呼ばれる
-  theCamera.onError = cameraErrorCallback;
 
   // ---- [6] 初期化完了メッセージ ----
   Serial.println();

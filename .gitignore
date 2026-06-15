@@ -12,6 +12,7 @@ libraries/
 # VS Code設定（個人設定は共有しない）
 .vscode/
 !.vscode/extensions.json
+!.vscode/arduino.json
 
 # Claude Code内部ファイル（チームには不要）
 .claude/
