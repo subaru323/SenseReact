@@ -4,11 +4,17 @@
  * ESP-NOWで受け取った左右の速度指令で、連続回転サーボ4個を回す。
  * 差動駆動：left/right それぞれ -100〜100（%）。
  *
- * 【配線】
- *   GPIO13 → 左前サーボ
- *   GPIO14 → 左後サーボ
- *   GPIO25 → 右前サーボ
- *   GPIO26 → 右後サーボ
+ * 旋回ロジック：
+ *   前進   left=+N, right=+N
+ *   後退   left=-N, right=-N
+ *   右旋回 left=0,  right=+N（左輪停止・右輪のみ前進）
+ *   左旋回 left=+N, right=0 （右輪停止・左輪のみ前進）
+ *
+ * 【配線（実機確認済み）】
+ *   GPIO13 → 後輪左（左グループ）
+ *   GPIO26 → 前輪左（左グループ）
+ *   GPIO14 → 後輪右（右グループ）
+ *   GPIO25 → 前輪右（右グループ）
  *   サーボ VCC → 外部電池+（必須。ESP32の5Vでは電流不足）
  *   サーボ GND → 電池− かつ ESP32 GND（共通必須）
  *
@@ -25,10 +31,10 @@ typedef struct {
   int16_t right;
 } DriveCmd;
 
-const int PIN_FL = 13;
-const int PIN_RL = 14;
-const int PIN_FR = 25;
-const int PIN_RR = 26;
+const int PIN_RL = 13;   // 後輪左
+const int PIN_FL = 26;   // 前輪左
+const int PIN_RR = 14;   // 後輪右
+const int PIN_FR = 25;   // 前輪右
 
 Servo servoFL, servoRL, servoFR, servoRR;
 
