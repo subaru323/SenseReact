@@ -43,7 +43,7 @@ volatile unsigned long lastRecv = 0;
 
 int toUs(int speed) {
   speed = constrain(speed, -100, 100);
-  return 1500 + speed * 10;  // -100→500, 0→1500, 100→2500
+  return 1500 + speed * 11;  // -100→400, 0→1500, 100→2600（★拡張レンジ・速度アップ試験）
 }
 
 void stopAll() {
@@ -67,10 +67,10 @@ void setup() {
   Serial.begin(115200);
   delay(300);
 
-  servoFL.attach(PIN_FL, 500, 2500);
-  servoRL.attach(PIN_RL, 500, 2500);
-  servoFR.attach(PIN_FR, 500, 2500);
-  servoRR.attach(PIN_RR, 500, 2500);
+  servoFL.attach(PIN_FL, 400, 2600);
+  servoRL.attach(PIN_RL, 400, 2600);
+  servoFR.attach(PIN_FR, 400, 2600);
+  servoRR.attach(PIN_RR, 400, 2600);
   stopAll();
 
   WiFi.mode(WIFI_STA);
